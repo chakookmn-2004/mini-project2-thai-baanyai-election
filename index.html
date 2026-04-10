@@ -818,6 +818,8 @@ function clearAll() {
   selectedBanyaiStatus = null;
   selectedMoveStatus = null;
   selectedKey = null;
+  selectedRiskLevel = null;                                          
+  globalFilter = { party:null, region:null, district:null, status:null, moveStatus:null };
   clearFlowSelection();
   document.getElementById('filter-region').value = 'all';
   document.getElementById('filter-party').value  = 'all';
@@ -3638,7 +3640,7 @@ function renderTrendStripChart() {
 
   const containerW = svg.node().parentElement.clientWidth || 500;
   const ROW_H = 44;
-  const m = { t: 10, r: 90, b: 30, l: 160 };  
+  const m = { t: 10, r: 120, b: 30, l: 160 }; 
   const H = parties.length * ROW_H + m.t + m.b;
   const W = Math.max(containerW, parties.length > 0 ? 500 : 300);
 
@@ -3729,7 +3731,7 @@ function renderTrendStripChart() {
 
     // Median label
     svg.append('text')
-      .attr('x', W - m.r + 16).attr('y', cy + 4)
+      .attr('x', W - m.r + 8).attr('y', cy + 4)
       .attr('font-size', 9.5).attr('font-family','Sarabun')
       .attr('fill', med >= 0 ? '#16a34a' : '#ef4444')
       .attr('font-weight', 700)

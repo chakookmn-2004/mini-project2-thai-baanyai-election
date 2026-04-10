@@ -1,3 +1,5 @@
+Info visual - Mini project 2: Thai election 2026
+
 Kamonnat Tepkwan ID 6642005226
 
 Kanobporn Petchoo ID 6642009826

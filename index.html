@@ -2049,9 +2049,10 @@ function renderGapLostScatter() {
 
   const data = getLostData().filter(d => d.gap_pct <= 15).sort((a,b) => a.gap_pct - b.gap_pct);
   if (!data.length) { svg.attr('width',400).attr('height',60); return; }
-  
+
   const W = document.getElementById('gap-lost-svg')?.parentElement?.clientWidth - 4 || 500;
   const DOTD = 8, ROW = 14, MT = 28, MB = 24, ML = 10, MR = 90;
+  const H = Math.max(300, data.length * ROW + MT + MB + 20);
   svg.attr('width', W).attr('height', H);
 
   const x = d3.scaleLinear().domain([0, 15]).range([ML, W-MR]);
@@ -2102,30 +2103,14 @@ function renderGapLostScatter() {
 
   // Party legend below the data
   const winnerParties = [...new Set(data.map(d=>d.winner_party))].filter(Boolean).sort();
-  const ITEM_W = 90;
-  const usableW = W - MR - ML;
-  const cols = Math.max(1, Math.floor(usableW / ITEM_W));
-  const legRows = Math.ceil(winnerParties.length / cols);
-  // ขยาย H ถ้า legend ต้องการพื้นที่เพิ่ม — ต้อง set ก่อน append circle/text
-  const LEG_GAP = 10;
-  const LEG_ROW_H = 16;
-  
-  const LEG_Y = MT + data.length * ROW + LEG_GAP;
-  const H = Math.max(
-    300,
-    LEG_Y + legRows * LEG_ROW_H + MB
-  );
-  winnerParties.forEach((p, i) => {
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    const lx = ML + col * ITEM_W;
-    const ly = LEG_Y + row * 16;
-    svg.append('circle').attr('cx', lx + 5).attr('cy', ly + 4).attr('r', 4).attr('fill', pColor(p));
-    svg.append('text')
-      .attr('x', lx + 12).attr('y', ly + 8)
-      .attr('font-size', 8.5).attr('font-family', 'Sarabun')
-      .attr('fill', pColor(p))
-      .text(p.length > 9 ? p.slice(0, 9) + '…' : p);
+  const LEG_Y = MT + data.length * ROW + 8;
+  let legX = ML;
+  winnerParties.forEach((p,i) => {
+    svg.append('circle').attr('cx',legX+5).attr('cy',LEG_Y+5).attr('r',4).attr('fill',pColor(p));
+    svg.append('text').attr('x',legX+12).attr('y',LEG_Y+9).attr('font-size',8.5)
+      .attr('font-family','Sarabun').attr('fill',pColor(p)).text(p);
+    legX += (p.length * 6 + 24);
+    if (legX > W - MR - 80) { legX = ML; }
   });
 }
 

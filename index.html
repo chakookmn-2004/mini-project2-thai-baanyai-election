@@ -2049,11 +2049,9 @@ function renderGapLostScatter() {
 
   const data = getLostData().filter(d => d.gap_pct <= 15).sort((a,b) => a.gap_pct - b.gap_pct);
   if (!data.length) { svg.attr('width',400).attr('height',60); return; }
-
+  
   const W = document.getElementById('gap-lost-svg')?.parentElement?.clientWidth - 4 || 500;
   const DOTD = 8, ROW = 14, MT = 28, MB = 24, ML = 10, MR = 90;
-  const totalLegRows = Math.ceil([...new Set(data.map(d=>d.winner_party))].filter(Boolean).length / 2);
-  const H = Math.max(300, data.length * ROW + MT + MB + totalLegRows * 16 + 16);
   svg.attr('width', W).attr('height', H);
 
   const x = d3.scaleLinear().domain([0, 15]).range([ML, W-MR]);
@@ -2102,25 +2100,33 @@ function renderGapLostScatter() {
       .style('cursor','pointer');
   });
 
+  // Party legend below the data
   const winnerParties = [...new Set(data.map(d=>d.winner_party))].filter(Boolean).sort();
-  const LEG_ITEM_H = 16;
-  const LEG_COL_W = Math.floor((W - ML - MR) / 2); // 2 คอลัมน์
-  let legRow = 0, legCol = 0;
-  const LEG_Y_START = MT + data.length * ROW + 10;
+  const ITEM_W = 90;
+  const usableW = W - MR - ML;
+  const cols = Math.max(1, Math.floor(usableW / ITEM_W));
+  const legRows = Math.ceil(winnerParties.length / cols);
+  // ขยาย H ถ้า legend ต้องการพื้นที่เพิ่ม — ต้อง set ก่อน append circle/text
+  const LEG_GAP = 10;
+  const LEG_ROW_H = 16;
   
-  winnerParties.forEach((p) => {
-    const lx = ML + legCol * LEG_COL_W;
-    const ly = LEG_Y_START + legRow * LEG_ITEM_H;
+  const LEG_Y = MT + data.length * ROW + LEG_GAP;
+  const H = Math.max(
+    300,
+    LEG_Y + legRows * LEG_ROW_H + MB
+  );
+  winnerParties.forEach((p, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const lx = ML + col * ITEM_W;
+    const ly = LEG_Y + row * 16;
     svg.append('circle').attr('cx', lx + 5).attr('cy', ly + 4).attr('r', 4).attr('fill', pColor(p));
-    svg.append('text').attr('x', lx + 13).attr('y', ly + 8)
-      .attr('font-size', 9).attr('font-family', 'Sarabun').attr('fill', pColor(p))
-      .text(p);
-    legCol++;
-    if (legCol >= 2) { legCol = 0; legRow++; }
+    svg.append('text')
+      .attr('x', lx + 12).attr('y', ly + 8)
+      .attr('font-size', 8.5).attr('font-family', 'Sarabun')
+      .attr('fill', pColor(p))
+      .text(p.length > 9 ? p.slice(0, 9) + '…' : p);
   });
-  
-  // ปรับ H ให้ครอบคลุม legend ด้วย
-  const totalLegRows = Math.ceil(winnerParties.length / 2);
 }
 
 function renderRiskTables() {

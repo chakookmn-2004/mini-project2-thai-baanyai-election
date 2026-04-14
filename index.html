@@ -2052,7 +2052,8 @@ function renderGapLostScatter() {
 
   const W = document.getElementById('gap-lost-svg')?.parentElement?.clientWidth - 4 || 500;
   const DOTD = 8, ROW = 14, MT = 28, MB = 24, ML = 10, MR = 90;
-  const H = Math.max(300, data.length * ROW + MT + MB + 20);
+  const totalLegRows = Math.ceil([...new Set(data.map(d=>d.winner_party))].filter(Boolean).length / 2);
+  const H = Math.max(300, data.length * ROW + MT + MB + totalLegRows * 16 + 16);
   svg.attr('width', W).attr('height', H);
 
   const x = d3.scaleLinear().domain([0, 15]).range([ML, W-MR]);
@@ -2101,17 +2102,25 @@ function renderGapLostScatter() {
       .style('cursor','pointer');
   });
 
-  // Party legend below the data
   const winnerParties = [...new Set(data.map(d=>d.winner_party))].filter(Boolean).sort();
-  const LEG_Y = MT + data.length * ROW + 8;
-  let legX = ML;
-  winnerParties.forEach((p,i) => {
-    svg.append('circle').attr('cx',legX+5).attr('cy',LEG_Y+5).attr('r',4).attr('fill',pColor(p));
-    svg.append('text').attr('x',legX+12).attr('y',LEG_Y+9).attr('font-size',8.5)
-      .attr('font-family','Sarabun').attr('fill',pColor(p)).text(p);
-    legX += (p.length * 6 + 24);
-    if (legX > W - MR - 80) { legX = ML; }
+  const LEG_ITEM_H = 16;
+  const LEG_COL_W = Math.floor((W - ML - MR) / 2); // 2 คอลัมน์
+  let legRow = 0, legCol = 0;
+  const LEG_Y_START = MT + data.length * ROW + 10;
+  
+  winnerParties.forEach((p) => {
+    const lx = ML + legCol * LEG_COL_W;
+    const ly = LEG_Y_START + legRow * LEG_ITEM_H;
+    svg.append('circle').attr('cx', lx + 5).attr('cy', ly + 4).attr('r', 4).attr('fill', pColor(p));
+    svg.append('text').attr('x', lx + 13).attr('y', ly + 8)
+      .attr('font-size', 9).attr('font-family', 'Sarabun').attr('fill', pColor(p))
+      .text(p);
+    legCol++;
+    if (legCol >= 2) { legCol = 0; legRow++; }
   });
+  
+  // ปรับ H ให้ครอบคลุม legend ด้วย
+  const totalLegRows = Math.ceil(winnerParties.length / 2);
 }
 
 function renderRiskTables() {

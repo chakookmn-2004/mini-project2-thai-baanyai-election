@@ -2550,7 +2550,8 @@ function renderFlow(){
           const isMoved = lk.src !== lk.tgt;
           const statusKey = isMoved ? 'ย้าย' : 'ไม่ย้าย';
           // ใช้ FLOW_STATUS_DATA เหมือน renderFlowWinrateStatus
-          const tgtRow = FLOW_STATUS_DATA.find(d => d.party === lk.tgt && d.status === statusKey);
+          const _dsd = computeFlowStatusData();
+          const tgtRow = _dsd.find(d => d.party === lk.tgt && d.status === statusKey);
           const runnable = tgtRow ? tgtRow.won + tgtRow.lost : (lk.won + lk.lost);
           const won = tgtRow ? tgtRow.won : lk.won;
           const wr = runnable > 0 ? (won / runnable * 100).toFixed(0) : 0;
@@ -2717,6 +2718,38 @@ function _buildStatusFromLinks(links) {
   return Object.values(map);
 }
 
+function computeFlowStatusData() {
+  // คำนวณ FLOW_STATUS_DATA แบบ dynamic จาก filteredData
+  const filteredKeys = new Set(filteredData.map(d => d.province + '-' + d.constituency));
+  const rows = TREND_DATA.filter(d => filteredKeys.has(d.province + '-' + d.constituency));
+  
+  const map = {};
+  rows.forEach(d => {
+    const key = d.party_2569 + '|' + d.move_status;
+    if (!map[key]) map[key] = { party: d.party_2569, status: d.move_status, total: 0, won: 0, lost: 0, skip: 0 };
+    map[key].total += 1;
+    if (d.banyai_won) map[key].won += 1;
+    else map[key].lost += 1;
+  });
+  return Object.values(map);
+}
+
+function computeFlowOriginData() {
+  // คำนวณ FLOW_ORIGIN_DATA แบบ dynamic จาก filteredData
+  const filteredKeys = new Set(filteredData.map(d => d.province + '-' + d.constituency));
+  const rows = TREND_DATA.filter(d => filteredKeys.has(d.province + '-' + d.constituency));
+  
+  const map = {};
+  rows.forEach(d => {
+    const key = d.party_2569 + '|' + d.party_2566;
+    if (!map[key]) map[key] = { party2569: d.party_2569, party2566: d.party_2566, total: 0, won: 0, lost: 0 };
+    map[key].total += 1;
+    if (d.banyai_won) map[key].won += 1;
+    else map[key].lost += 1;
+  });
+  return Object.values(map);
+}
+  
 function renderFlowStatusBar() {
   const svg = d3.select('#flow-status-bar-svg');
   if (svg.empty()) return;
@@ -2725,9 +2758,9 @@ function renderFlowStatusBar() {
   const statuses = ['ไม่ย้าย', 'ย้าย', 'ขยับจากบ้านใหญ่ท้องถิ่น'];
   const sortMode = getChartSort('flow-status');
 
-  const _links = getFlowLinksAll();
-  let parties = [...new Set(FLOW_STATUS_DATA.map(d => d.party))];
-  const getTot = (p) => FLOW_STATUS_DATA.filter(x=>x.party===p).reduce((s,x)=>s+x.total,0);
+  const _dynStatusData = computeFlowStatusData();
+  let parties = [...new Set(_dynStatusData.map(d => d.party))];
+  const getTot = (p) => _dynStatusData.filter(x=>x.party===p).reduce((s,x)=>s+x.total,0);
   if (sortMode === 'asc') {
     parties.sort((a,b) => getTot(a) - getTot(b));
   } else {
@@ -2755,7 +2788,7 @@ function renderFlowStatusBar() {
     const gy = 32 + i*(barH+pad);
     const pdata = statuses.map(s => ({
       status: s,
-      val: (FLOW_STATUS_DATA.find(d => d.party===p && d.status===s)||{total:0}).total
+      val: (_dynStatusData.find(d => d.party===p && d.status===s)||{total:0}).total
     }));
     const total = pdata.reduce((s,d)=>s+d.val, 0);
 
@@ -2795,12 +2828,13 @@ function renderFlowWinrateStatus() {
   const sLabel = {'ไม่ย้าย':'ไม่ย้าย','ย้าย':'ย้าย','ขยับจากบ้านใหญ่ท้องถิ่น':'ขยับจากบ้านใหญ่ท้องถิ่น'};
 
   // Party order: by total count desc
-  const PARTY_ORDER_FL = [...new Set(FLOW_STATUS_DATA.map(d=>d.party))].sort((a,b)=>{
-    const ta = FLOW_STATUS_DATA.filter(x=>x.party===a).reduce((s,x)=>s+x.total,0);
-    const tb = FLOW_STATUS_DATA.filter(x=>x.party===b).reduce((s,x)=>s+x.total,0);
+  const _dynSD = computeFlowStatusData();
+  const PARTY_ORDER_FL = [...new Set(_dynSD.map(d=>d.party))].sort((a,b)=>{
+    const ta = _dynSD.filter(x=>x.party===a).reduce((s,x)=>s+x.total,0);
+    const tb = _dynSD.filter(x=>x.party===b).reduce((s,x)=>s+x.total,0);
     return tb - ta;
   });
-  const parties = PARTY_ORDER_FL.filter(p => FLOW_STATUS_DATA.some(d=>d.party===p));
+  const parties = PARTY_ORDER_FL.filter(p => _dynSD.some(d=>d.party===p));
 
   const W = svg.node().parentElement.clientWidth - 20 || 600;
   const ROW = 30, MT = 40, ML = 150;
@@ -2839,7 +2873,7 @@ function renderFlowWinrateStatus() {
       .attr('stroke','var(--border)').attr('stroke-width',0.5);
 
     statuses.forEach(s => {
-      const row = FLOW_STATUS_DATA.find(d=>d.party===p&&d.status===s);
+      const row = _dynSD.find(d=>d.party===p&&d.status===s);
       if (!row || row.total===0) return;
       const runnable = row.won + row.lost;
       const wr = runnable>0?row.won/runnable*100:0;
@@ -2967,23 +3001,26 @@ function renderFlowSrcCompare() {
   svg.selectAll('*').remove();
 
   // สร้าง data สำหรับแต่ละพรรคปี 2566
-  const srcParties = [...new Set(FLOW_ORIGIN_DATA.map(d=>d.party2566))].filter(p=>p!=='นักการเมืองท้องถิ่น');
+  const _dynOD = computeFlowOriginData();
+  const srcParties = [...new Set(_dynOD.map(d=>d.party2566))].filter(p=>p!=='นักการเมืองท้องถิ่น');
   const rows = srcParties.map(p => {
-    const migrated = FLOW_ORIGIN_DATA.filter(d=>d.party2566===p && d.party2566!==d.party2569);
+    const migrated = _dynOD.filter(d=>d.party2566===p && d.party2566!==d.party2569);
     const migRun = migrated.reduce((s,d)=>s+d.won+d.lost,0);
     const migWon = migrated.reduce((s,d)=>s+d.won,0);
     const migWR  = migRun>0 ? migWon/migRun*100 : null;
 
-    const stayed = FLOW_STATUS_DATA.find(d=>d.party===p && d.status==='ไม่ย้าย');
+    const _dynSD2 = computeFlowStatusData();
+    const stayed = _dynSD2.find(d=>d.party===p && d.status==='ไม่ย้าย');
     const stayRun = stayed ? stayed.won+stayed.lost : 0;
     const stayWR  = stayRun>0 ? stayed.won/stayRun*100 : null;
 
     return { p, migWR, stayWR, migRun, stayRun, total: migRun+stayRun };
   }).filter(d=>d.migWR!==null && d.stayWR!==null);
   // Sort by FLOW_STATUS_DATA party order (consistent with other charts)
-  const srcOrder = [...new Set(FLOW_STATUS_DATA.map(d=>d.party))].sort((a,b)=>{
-    const ta = FLOW_STATUS_DATA.filter(x=>x.party===a).reduce((s,x)=>s+x.total,0);
-    const tb = FLOW_STATUS_DATA.filter(x=>x.party===b).reduce((s,x)=>s+x.total,0);
+  const _dynSD3 = computeFlowStatusData();
+  const srcOrder = [...new Set(_dynSD3.map(d=>d.party))].sort((a,b)=>{
+    const ta = _dynSD3.filter(x=>x.party===a).reduce((s,x)=>s+x.total,0);
+    const tb = _dynSD3.filter(x=>x.party===b).reduce((s,x)=>s+x.total,0);
     return tb - ta;
   });
   rows.sort((a,b)=>{ const ia=srcOrder.indexOf(a.p); const ib=srcOrder.indexOf(b.p); return (ia<0?999:ia)-(ib<0?999:ib); });
@@ -3051,23 +3088,26 @@ function renderFlowTgtCompare() {
   if (svg.empty()) return;
   svg.selectAll('*').remove();
 
-  const tgtParties = [...new Set(FLOW_ORIGIN_DATA.map(d=>d.party2569))];
+  const _dynOD2 = computeFlowOriginData();
+  const tgtParties = [...new Set(_dynOD2.map(d=>d.party2569))];
   const rows = tgtParties.map(p => {
-    const migIn = FLOW_ORIGIN_DATA.filter(d=>d.party2569===p && d.party2566!==d.party2569 && d.party2566!=='นักการเมืองท้องถิ่น');
+    const migIn = _dynOD2.filter(d=>d.party2569===p && d.party2566!==d.party2569 && d.party2566!=='นักการเมืองท้องถิ่น');
     const migRun = migIn.reduce((s,d)=>s+d.won+d.lost,0);
     const migWon = migIn.reduce((s,d)=>s+d.won,0);
     const migWR  = migRun>0 ? migWon/migRun*100 : null;
 
-    const stayed = FLOW_STATUS_DATA.find(d=>d.party===p && d.status==='ไม่ย้าย');
+    const _dynSD4 = computeFlowStatusData();
+    const stayed = _dynSD4.find(d=>d.party===p && d.status==='ไม่ย้าย');
     const stayRun = stayed ? stayed.won+stayed.lost : 0;
     const stayWR  = stayRun>0 ? stayed.won/stayRun*100 : null;
 
     return { p, migWR, stayWR, migRun, stayRun, total: migRun+stayRun };
   }).filter(d=>d.migWR!==null && d.stayWR!==null);
   // Sort by party total count from FLOW_STATUS_DATA 
-  const tgtOrder = [...new Set(FLOW_STATUS_DATA.map(d=>d.party))].sort((a,b)=>{
-    const ta = FLOW_STATUS_DATA.filter(x=>x.party===a).reduce((s,x)=>s+x.total,0);
-    const tb = FLOW_STATUS_DATA.filter(x=>x.party===b).reduce((s,x)=>s+x.total,0);
+  const _dynSD5 = computeFlowStatusData();
+  const tgtOrder = [...new Set(_dynSD5.map(d=>d.party))].sort((a,b)=>{
+    const ta = _dynSD5.filter(x=>x.party===a).reduce((s,x)=>s+x.total,0);
+    const tb = _dynSD5.filter(x=>x.party===b).reduce((s,x)=>s+x.total,0);
     return tb - ta;
   });
   rows.sort((a,b)=> { const ia=tgtOrder.indexOf(a.p); const ib=tgtOrder.indexOf(b.p); return (ia<0?999:ia)-(ib<0?999:ib); });
@@ -4197,6 +4237,10 @@ function setTrendDirection(dir) {
   document.getElementById('tdir-' + dir)?.classList.add('active');
   renderTrendScatter();
   renderTrendStripChart();
+  renderGapLostScatter();
+  renderRiskTables();
+  renderMarginDivergingBar();
+  renderRiskSummary();
 }
   
 // OVERRIDE renderAll with enhanced versions

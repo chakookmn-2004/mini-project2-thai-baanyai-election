@@ -790,6 +790,12 @@ function applyFilters() {
       if (risk === 'borderline' && (marginPct < 25 || marginPct >= 45)) return false;
       if (risk === 'safe'       && marginPct < 45)                      return false;
     }
+    if (trendDirection !== 'all') {
+      const td = TREND_DATA.find(t => t.province === d.province && t.constituency === d.constituency);
+      if (!td) return false;
+      if (trendDirection === 'up' && td.score_change <= 0) return false;
+      if (trendDirection === 'down' && td.score_change >= 0) return false;
+    }
     return true;
   });
 
@@ -4235,12 +4241,7 @@ function setTrendDirection(dir) {
   trendDirection = dir;
   document.querySelectorAll('[id^="tdir-"]').forEach(b => b.classList.remove('active'));
   document.getElementById('tdir-' + dir)?.classList.add('active');
-  renderTrendScatter();
-  renderTrendStripChart();
-  renderGapLostScatter();
-  renderRiskTables();
-  renderMarginDivergingBar();
-  renderRiskSummary();
+  applyFilters();
 }
   
 // OVERRIDE renderAll with enhanced versions

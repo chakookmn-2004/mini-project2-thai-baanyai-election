@@ -487,9 +487,14 @@ select:focus, .filter-btn:hover { border-color: var(--accent); outline: none; }
 
     <div style="display:grid;grid-template-columns:0.8fr 1.2fr;gap:16px;margin-bottom:16px">
       <div class="card">
-        <div class="card-title"><span>📉</span> แนวโน้มคะแนนบ้านใหญ่ ปี 66 → 69</div>
-        <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px"><b>จุดใต้เส้นทแยง = คะแนนลด = บ้านใหญ่กำลังเสื่อมอิทธิพล </b></div>
-        <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px">คลิกจุดเพื่อ filter ตามพรรค · สีจุด = สีของพรรคที่ลงสมัครปี 69</div>
+      <div class="card-title"><span>📉</span> แนวโน้มคะแนนบ้านใหญ่ ปี 66 → 69</div>
+      <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px"><b>จุดใต้เส้นทแยง = คะแนนลด = บ้านใหญ่กำลังเสื่อมอิทธิพล </b></div>
+      <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px">คลิกจุดเพื่อ filter ตามพรรค · สีจุด = สีของพรรคที่ลงสมัครปี 69</div>
+      <div style="display:flex;gap:6px;margin-bottom:8px" id="trend-direction-btns">
+        <button class="map-mode-btn active" id="tdir-all" onclick="setTrendDirection('all')">ทั้งหมด</button>
+        <button class="map-mode-btn" id="tdir-up" onclick="setTrendDirection('up')">📈 คะแนนเพิ่ม</button>
+        <button class="map-mode-btn" id="tdir-down" onclick="setTrendDirection('down')">📉 คะแนนลด</button>
+      </div>
         <svg id="trend-scatter-svg" style="display:block;margin:0 auto"></svg>
       </div>
       <!-- Strip chart แสดงการเปลี่ยนแปลงคะแนนรายพรรค -->
@@ -2721,8 +2726,6 @@ function renderFlowStatusBar() {
   const sortMode = getChartSort('flow-status');
 
   const _links = getFlowLinksAll();
-  // สร้าง status จาก links: src===tgt = ไม่ย้าย, src!==tgt = ย้าย
-  const _statusRows = _buildStatusFromLinks(_links);
   let parties = [...new Set(FLOW_STATUS_DATA.map(d => d.party))];
   const getTot = (p) => FLOW_STATUS_DATA.filter(x=>x.party===p).reduce((s,x)=>s+x.total,0);
   if (sortMode === 'asc') {
@@ -3535,6 +3538,9 @@ function renderTrendScatter() {
       const key = d.province + '-' + d.constituency;
       if (!filteredData.some(r => r.province + '-' + r.constituency === key)) return false;
     }
+    // trend filter
+    if (trendDirection === 'up' && d.score_change <= 0) return false;
+    if (trendDirection === 'down' && d.score_change >= 0) return false;
     return true;
   });
 
@@ -3632,6 +3638,8 @@ function renderTrendStripChart() {
       const key = d.province + '-' + d.constituency;
       if (!filteredData.some(r => r.province + '-' + r.constituency === key)) return false;
     }
+    if (trendDirection === 'up' && d.score_change <= 0) return false;
+    if (trendDirection === 'down' && d.score_change >= 0) return false;
     return true;
   });
 
@@ -3850,8 +3858,9 @@ function renderRiskSummary() {
     return `
     <div onclick="(function(){
         selectedRiskLevel = (selectedRiskLevel === '${r.key}') ? null : '${r.key}';
-        renderRiskSummary();
-        renderMarginDivergingBar();
+        const riskEl = document.getElementById('filter-risk');
+        if (riskEl) riskEl.value = selectedRiskLevel || 'all';
+        applyFilters();
       })()"
       style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:8px;background:${r.bg};border:1px solid ${r.border};margin-bottom:8px;cursor:pointer;transition:all 0.15s;${activeStyle}"
       title="คลิกเพื่อ highlight ${r.label} · คลิกซ้ำเพื่อเลิกกรอง">
@@ -4180,7 +4189,16 @@ function renderOverviewRegion() {
   });
 }
 
+let trendDirection = 'all'; // 'all' | 'up' | 'down'
 
+function setTrendDirection(dir) {
+  trendDirection = dir;
+  document.querySelectorAll('[id^="tdir-"]').forEach(b => b.classList.remove('active'));
+  document.getElementById('tdir-' + dir)?.classList.add('active');
+  renderTrendScatter();
+  renderTrendStripChart();
+}
+  
 // OVERRIDE renderAll with enhanced versions
 const _origRenderAll = renderAll;
 function renderAll() {
@@ -4200,8 +4218,13 @@ function renderAll() {
   } else if (p === 'map') {
     buildTilemapV2();
   } else if (p === 'flow') {
-    renderFlow();
-    setTimeout(()=>{renderFlowStatusBar();renderFlowWinrateStatus();renderFlowSrcWinrate();renderFlowSrcCompare();renderFlowTgtCompare();},80);
+      renderFlow();
+      renderFlowStatusBar();
+      renderFlowWinrateStatus();
+      renderFlowSrcCompare();
+      renderFlowTgtCompare();
+      renderFlowSrcWinrate();
+  }
   } else if (p === 'strategy') {
     renderTrendScatter();
     renderTrendStripChart();

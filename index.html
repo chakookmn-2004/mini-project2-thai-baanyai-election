@@ -340,7 +340,7 @@ select:focus, .filter-btn:hover { border-color: var(--accent); outline: none; }
       </div>
     </div>
 
-    <div class="source-note" style="margin-top:8px">ที่มา: กกต. และ Rocket Media Lab</div>
+    <div class="source-note" style="margin-top:8px">ที่มา: กกต., Rocket Media Lab, และ WeVis: Parliament Watch</div>
   </div>
 </div>
 
@@ -410,7 +410,7 @@ select:focus, .filter-btn:hover { border-color: var(--accent); outline: none; }
       </div>
       <div id="battle-card-body"></div>
     </div>
-    <div class="source-note" style="margin-top:8px">ที่มา: กกต. และ Rocket Media Lab</div>
+    <div class="source-note" style="margin-top:8px">ที่มา: กกต., Rocket Media Lab, และ WeVis: Parliament Watch</div>
 
   </div>
   
@@ -436,7 +436,7 @@ select:focus, .filter-btn:hover { border-color: var(--accent); outline: none; }
             <button class="map-mode-btn" style="padding:6px 10px" onclick="clearFlowSelection()">ล้างการเลือก</button>
           </div>
         </div>
-        <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px">สีเส้น: <span style="color:#f97316">■</span> ย้ายพรรค <span style="color:#60a5fa">■</span> อยู่พรรคเดิม · <b>คลิกแต่ละเส้นเพื่อดูรายละเอียด</b></div>
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px">สีเส้น: <span style="color:#16a34a">■</span> ไม่ย้ายพรรค <span style="color:#ef4444">■</span> ย้ายพรรค · <b>คลิกแต่ละเส้นเพื่อดูรายละเอียด</b></div>
         <div style="overflow-x:auto"><svg id="flow-sankey-svg"></svg></div>
       </div>
       <div class="card">
@@ -475,7 +475,7 @@ select:focus, .filter-btn:hover { border-color: var(--accent); outline: none; }
         <svg id="flow-tgt-compare-svg" style="width:100%;display:block"></svg>
       </div>
     </div>
-  <div class="source-note" style="margin-top:8px">ที่มา: กกต. และ Rocket Media Lab</div>
+  <div class="source-note" style="margin-top:8px">ที่มา: กกต., Rocket Media Lab, และ WeVis: Parliament Watch</div>
   </div>
 </div>
 
@@ -540,7 +540,7 @@ select:focus, .filter-btn:hover { border-color: var(--accent); outline: none; }
         <div id="risk-lost-table" style="overflow:auto;max-height:350px"></div>
       </div>
     </div>
-    <div class="source-note" style="margin-top:8px">ที่มา: กกต. และ Rocket Media Lab</div>
+    <div class="source-note" style="margin-top:8px">ที่มา: กกต., Rocket Media Lab, และ WeVis: Parliament Watch</div>
   </div>
 </div>
 <script>
@@ -1238,8 +1238,8 @@ function renderDonut() {
   const bylost = d.filter(r=>r.has_ban_yai && !r.ban_yai_won).length;
   const none = d.filter(r=>!r.has_ban_yai).length;
   const segments = [
-    {label:'บ้านใหญ่ชนะ', val:bywon, color:'#4ade80', key:'won'},
-    {label:'บ้านใหญ่แพ้', val:bylost, color:'#f87171', key:'lost'},
+    {label:'บ้านใหญ่ชนะ', val:bywon, color:'#16a34a', key:'won'},
+    {label:'บ้านใหญ่แพ้', val:bylost, color:'#ef4444', key:'lost'},
     {label:'ไม่มีบ้านใหญ่', val:none, color:'#334155', key:'none'},
   ];
   const pie = d3.pie().value(d=>d.val).sort(null);
@@ -1259,6 +1259,7 @@ function renderDonut() {
     .on('click',(e,d)=>{
       // visual-only highlight — ไม่เปลี่ยน filteredData เพื่อให้ beaters bar ยังแสดงอยู่
       selectedBanyaiStatus = (selectedBanyaiStatus === d.data.key) ? null : d.data.key;
+      selectedMoveStatus = null;
       globalFilter.status = selectedBanyaiStatus;
       // sync dropdown display only (ไม่เรียก applyFilters)
       const el = document.getElementById('filter-banyai');
@@ -2523,7 +2524,7 @@ function renderFlow(){
 
     const isMoved = lk.src !== lk.tgt;
     const segs = [
-      {n: lk.won + lk.lost, fill: isMoved ? '#f9731680' : '#60a5fa80', stroke: isMoved ? '#f97316' : '#60a5fa'},
+      {n: lk.won + lk.lost, fill: isMoved ? '#ef444480' : '#16a34a80', stroke: isMoved ? '#ef4444' : '#16a34a'},
       {n: lk.skip, fill:'#9ca3af40', stroke:'#9ca3af'},
     ];
     let curLY=ly0, curRY=ry0;
@@ -3158,7 +3159,7 @@ function renderFlowTgtCompare() {
     // ย้ายเข้า (น้ำเงิน)
     svg.append('circle').attr('cx',x2).attr('cy',cy).attr('r',10).attr('fill','#2563eb').attr('opacity',0.9)
       .style('cursor','pointer')
-      .on('mouseover',e=>showTT(`<div class="tt-title">${d.p} — ย้ายเข้ามา</div><div class="tt-row"><span class="tt-key">Win Rate 2569</span><span class="tt-val" style="color:#2563eb"><b>${d.migWR.toFixed(1)}%</b></span></div><div class="tt-row"><span class="tt-key">จำนวน</span><span class="tt-val">${d.migRun} คน</span></div>`,e))
+      .on('mouseover',e=>showTT(`<div class="tt-title">${d.p} — ย้ายเข้ามา</div><div class="tt-row"><span class="tt-key">Win Rate 2569</span><span class="tt-val" style="color:#ef4444"><b>${d.migWR.toFixed(1)}%</b></span></div><div class="tt-row"><span class="tt-key">จำนวน</span><span class="tt-val">${d.migRun} คน</span></div>`,e))
       .on('mousemove',moveTT).on('mouseleave',hideTT).on('click',()=>setFlowPartyFilter(d.p,'tgt'));
     svg.append('text').attr('x',x2).attr('y',cy+3.5).attr('text-anchor','middle')
       .attr('font-size',8).attr('fill','#fff').attr('font-family','Sarabun').attr('font-weight',700)
@@ -3400,7 +3401,7 @@ function renderBeatersBarEnhanced() {
   // - ถ้า globalFilter.party → dim พรรคอื่น
   const banyai = document.getElementById('filter-banyai')?.value || 'all';
   const risk   = document.getElementById('filter-risk')?.value || 'all';
-  const isDimmedByContext = (banyai === 'won' || banyai === 'none' || risk !== 'all');
+  const isDimmedByContext = (banyai === 'won' || banyai === 'none' || risk !== 'all') || !!selectedMoveStatus;
 
   const getBarOpacity = (d) => {
     if (globalFilter.party) return globalFilter.party === d.p ? 1 : 0.18;
@@ -3446,7 +3447,7 @@ function renderBeatersBarEnhanced() {
   if (isDimmedByContext) {
     svg.append('text').attr('x',130).attr('y',H-24).attr('font-size',9)
       .attr('fill','#f59e0b').attr('font-family','Sarabun')
-      .text('⚠️ ข้อมูลนี้อิงจากบ้านใหญ่ที่แพ้ทั้งหมด (ไม่ขึ้นกับ filter ปัจจุบัน)');
+      .text('⚠️ ข้อมูลนี้อิงจากบ้านใหญ่ที่แพ้ทั้งหมด ไม่ได้เกี่ยวข้องโดยตรงกับ filter ที่เลือกอยู่');
   }
   // X axis label
   svg.append('text').attr('x',130).attr('y',H-4).attr('font-size',9).attr('fill','var(--text-dim)').attr('font-family','Sarabun').text('จำนวนเขตที่ชนะบ้านใหญ่ →');
@@ -4131,7 +4132,10 @@ function renderMoveVsStay() {
 
     // Determine selection state
     const isThisSelected = selectedMoveStatus === d.status;
-    const moveOpacity = selectedMoveStatus ? (isThisSelected ? 0.9 : 0.2) : 0.85;
+    const dimByNone = selectedBanyaiStatus === 'none';
+    const moveOpacity = dimByNone ? 0.2 
+      : selectedMoveStatus ? (isThisSelected ? 0.9 : 0.2) 
+      : 0.85;
 
     // Win rate bar — clickable, dims with filter
     svg.append('rect').attr('x',bx).attr('y',y(d.wr)).attr('width',bw).attr('height',H-m.b-y(d.wr))
@@ -4145,14 +4149,19 @@ function renderMoveVsStay() {
       ${d.total - d.runnable > 0 ? `<div class="tt-row"><span class="tt-key" style="color:#9ca3af">ไม่ได้ลงสมัคร</span><span class="tt-val" style="color:#9ca3af">${d.total - d.runnable} คน</span></div>` : ''}`,e))
       .on('mousemove',moveTT).on('mouseleave',hideTT)
       .on('click',()=>{
-        // Toggle selectedMoveStatus — show matching won-banyai in parliament + update KPIs
         selectedMoveStatus = (selectedMoveStatus === d.status) ? null : d.status;
         selectedBarParty = null;
-        selectedBanyaiStatus = null;
+        selectedBanyaiStatus = selectedMoveStatus ? 'won' : null;  // ← highlight บ้านใหญ่ชนะใน Donut
+        globalFilter.status = selectedBanyaiStatus;
+        const el = document.getElementById('filter-banyai');
+        if (el) el.value = selectedBanyaiStatus || 'all';
         renderStrategicKPIs();
         renderMoveVsStay();
+        renderDonut();           // ← Donut ขยับ
+        renderParliament();      // ← Parliament ขยับ
+        renderBeatersBarEnhanced(); // ← Beaters Bar ขยับ
+        updateFilterBadges();
       });
-
     // Selected bar indicator (outline)
     if (isThisSelected) {
       svg.append('rect').attr('x',bx-2).attr('y',m.t-2).attr('width',bw+4).attr('height',H-m.t-m.b+4)

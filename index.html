@@ -950,7 +950,6 @@ function showBattleCard(key) {
 
       <!-- LEFT COLUMN: บ้านใหญ่ | ห่าง | อีกพรรค (แถวเดียว) -->
       <div>
-        <div style="font-size:10px;color:var(--text-dim);font-weight:700;text-transform:uppercase;margin-bottom:6px;letter-spacing:.06em">⚔️ การต่อสู้หลัก</div>
         <div style="display:flex;align-items:stretch;gap:0;border-radius:10px;overflow:hidden;border:1px solid var(--border)">
 
           <!-- ฝั่งซ้าย -->
@@ -2176,8 +2175,6 @@ function renderRiskTables() {
   if (heldWrap) heldWrap.innerHTML = h2;
 }
 
-
-// STRATEGY EXTRA: opponents + gap average
 function renderLostOpponentBars() {
   renderLostOpponents();
   renderLostGapAvg();
@@ -2711,7 +2708,6 @@ const STATUS_COLOR = {
   'ขยับจากบ้านใหญ่ท้องถิ่น': '#f97316',
 };
 function _buildStatusFromLinks(links) {
-  // สร้าง rows คล้าย FLOW_STATUS_DATA แต่จาก links จริง
   const map = {};
   links.forEach(lk => {
     const status = lk.src === lk.tgt ? 'ไม่ย้าย' : 'ย้าย';
